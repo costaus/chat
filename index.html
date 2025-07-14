@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tahc - Fórum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+        .panel {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+        }
+        a { color: #4a90e2; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        button {
+            background-color: #333;
+            border: 1px solid #555;
+            color: #ccc;
+            padding: 8px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #444; border-color: #666; }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 4px 10px;
+            font-size: 0.9rem;
+        }
+        pre {
+            background-color: #1e1e1e;
+            padding: 1rem;
+            white-space: pre-wrap; /* Mantém a formatação do texto */
+            word-wrap: break-word;
+            border: 1px solid #444;
+            color: #d4d4d4;
+        }
+    </style>
+</head>
+<body class="text-base">
+
+    <!-- Cabeçalho Fixo -->
+    <header class="panel mb-6 sticky top-0 z-20">
+        <div class="container mx-auto flex justify-between items-center p-3">
+            <h1 class="text-2xl font-bold text-gray-200 cursor-pointer" id="home-link">tahc</h1>
+            <div class="flex items-center space-x-2">
+                <button class="text-sm px-4 py-1">Login</button>
+                <button class="text-sm px-4 py-1 bg-blue-700/50 border-blue-600 hover:bg-blue-700/70">Registrar</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal Dinâmico -->
+    <main class="container mx-auto px-4">
+
+        <!-- Visualização da Home Page (Lista de Posts) -->
+        <div id="home-view">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div id="post-list-container" class="lg:col-span-3 space-y-4">
+                    <!-- Posts serão inseridos aqui pelo JavaScript -->
+                </div>
+                <aside id="sidebar" class="space-y-6">
+                    <!-- Sidebar com Fóruns -->
+                    <div class="panel">
+                        <h3 class="text-base font-bold text-gray-300 p-3 border-b border-gray-600">Fóruns Principais</h3>
+                        <ul class="text-sm">
+                            <li class="border-b border-gray-700"><a href="#" class="block p-3 hover:bg-gray-700/30">f/seguranca-op</a></li>
+                            <li class="border-b border-gray-700"><a href="#" class="block p-3 hover:bg-gray-700/30">f/privacidade</a></li>
+                            <li class="border-b border-gray-700"><a href="#" class="block p-3 hover:bg-gray-700/30">f/crypto</a></li>
+                            <li><a href="#" class="block p-3 hover:bg-gray-700/30">f/off-topic</a></li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <!-- Visualização de um Post Individual -->
+        <div id="post-view" class="hidden">
+            <!-- Conteúdo do post será inserido aqui -->
+        </div>
+
+        <!-- Visualização do Perfil de Usuário -->
+        <div id="profile-view" class="hidden">
+            <!-- Conteúdo do perfil será inserido aqui -->
+        </div>
+
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- SIMULAÇÃO DE BANCO DE DADOS ---
+        const db = {
+            users: {
+                'user-1b4f8e': { name: 'user-1b4f8e', joined: '2024-01-15', postCount: 1 },
+                'anon9921': { name: 'anon9921', joined: '2023-11-02', postCount: 1 },
+                'config_sys': { name: 'config_sys', joined: '2022-05-20', postCount: 1 },
+                'commenter_alpha': { name: 'commenter_alpha', joined: '2024-03-10', postCount: 0 },
+                'commenter_beta': { name: 'commenter_beta', joined: '2024-06-01', postCount: 0 },
+            },
+            posts: [
+                {
+                    id: 'post-001',
+                    title: 'Análise de vulnerabilidade em kernels antigos do Linux',
+                    content: 'Estava explorando o código-fonte do kernel 2.6 e encontrei algumas coisas fascinantes. Aparentemente, a função `vmsplice` tinha uma vulnerabilidade grave que permitia a escalada de privilégios locais.\n\nAlguém mais tem interesse em arqueologia de software? Podemos discutir alguns exploits clássicos que eram comuns na época. É impressionante ver como a segurança evoluiu desde então.',
+                    authorId: 'user-1b4f8e',
+                    forum: 'f/seguranca-op',
+                    timestamp: 'há 3 horas',
+                    score: 137,
+                    comments: ['comment-01', 'comment-02']
+                },
+                {
+                    id: 'post-002',
+                    title: 'Discussão sobre privacidade em mensageiros P2P',
+                    content: 'Qual a opinião de vocês sobre os mensageiros P2P atuais, como o Briar ou o Jami? Eles realmente oferecem um nível de privacidade superior aos centralizados como Signal, mesmo com criptografia E2E? A principal vantagem parece ser a resistência à censura, mas e quanto ao anonimato da rede?',
+                    authorId: 'anon9921',
+                    forum: 'f/privacidade',
+                    timestamp: 'há 8 horas',
+                    score: 89,
+                    comments: []
+                },
+                {
+                    id: 'post-003',
+                    title: 'Métodos para hardening de servidores caseiros',
+                    content: 'Estou montando um pequeno servidor em casa para hospedar alguns serviços pessoais (Nextcloud, Gitea). Quais são as práticas essenciais de hardening que vocês recomendam?\n\nMinha lista até agora:\n- Fail2ban\n- UFW configurado para negar tudo por padrão\n- Acesso SSH apenas com chaves\n- Atualizações automáticas de segurança',
+                    authorId: 'config_sys',
+                    forum: 'f/sysadmin',
+                    timestamp: 'há 1 dia',
+                    score: 256,
+                    comments: ['comment-03']
+                }
+            ],
+            comments: {
+                'comment-01': { authorId: 'commenter_alpha', content: 'Lembro desse exploit! Foi um clássico. Mostrava como um simples erro de verificação de ponteiro podia comprometer todo o sistema.', timestamp: 'há 2 horas' },
+                'comment-02': { authorId: 'config_sys', content: 'Ótimo tópico. É sempre bom revisitar o passado para não cometer os mesmos erros no futuro.', timestamp: 'há 1 hora' },
+                'comment-03': { authorId: 'user-1b4f8e', content: 'Boa lista. Adicionaria também a configuração de AppArmor ou SELinux, se você tiver paciência para configurar os perfis. É um grande passo para a segurança.', timestamp: 'há 20 horas' },
+            }
+        };
+
+        // --- ELEMENTOS DO DOM ---
+        const homeView = document.getElementById('home-view');
+        const postView = document.getElementById('post-view');
+        const profileView = document.getElementById('profile-view');
+        const postListContainer = document.getElementById('post-list-container');
+        const homeLink = document.getElementById('home-link');
+
+        // --- FUNÇÕES DE RENDERIZAÇÃO ---
+
+        function renderHomePage() {
+            postListContainer.innerHTML = ''; // Limpa a lista
+            db.posts.forEach(post => {
+                const postHtml = `
+                    <article class="panel flex" data-post-id="${post.id}">
+                        <div class="flex flex-col items-center justify-center p-2 w-16 bg-black/20">
+                            <button class="text-lg hover:text-blue-400">▲</button>
+                            <span class="font-bold text-gray-400">${post.score}</span>
+                            <button class="text-lg hover:text-orange-500">▼</button>
+                        </div>
+                        <div class="p-3 w-full cursor-pointer">
+                            <h2 class="text-lg mb-1 text-gray-100 hover:no-underline">${post.title}</h2>
+                            <div class="text-xs text-gray-500">
+                                <span>Enviado ${post.timestamp} por <a href="#" class="user-link" data-user-id="${post.authorId}">${post.authorId}</a> em <a href="#">${post.forum}</a></span>
+                            </div>
+                        </div>
+                    </article>
+                `;
+                postListContainer.innerHTML += postHtml;
+            });
+        }
+
+        function renderPostPage(postId) {
+            const post = db.posts.find(p => p.id === postId);
+            if (!post) return;
+
+            let commentsHtml = '';
+            post.comments.forEach(commentId => {
+                const comment = db.comments[commentId];
+                commentsHtml += `
+                    <div class="panel p-3 mt-4">
+                        <div class="text-xs text-gray-500 mb-2">
+                            <a href="#" class="user-link" data-user-id="${comment.authorId}">${comment.authorId}</a> • ${comment.timestamp}
+                        </div>
+                        <p>${comment.content}</p>
+                    </div>
+                `;
+            });
+
+            const postHtml = `
+                <button class="back-button" onclick="showView('home')">&larr; Voltar para a lista</button>
+                <div class="panel p-4">
+                    <h1 class="text-2xl font-bold text-gray-100 mb-2">${post.title}</h1>
+                    <div class="text-sm text-gray-500 mb-4">
+                        Postado por <a href="#" class="user-link" data-user-id="${post.authorId}">${post.authorId}</a> em <a href="#">${post.forum}</a>
+                    </div>
+                    <pre>${post.content}</pre>
+                </div>
+                <h3 class="text-lg font-semibold mt-6 mb-2 text-gray-300">${post.comments.length} Comentários</h3>
+                <div id="comments-container">
+                    ${commentsHtml || '<div class="panel p-3 text-gray-500">Nenhum comentário ainda.</div>'}
+                </div>
+            `;
+            postView.innerHTML = postHtml;
+        }
+
+        function renderProfilePage(userId) {
+            const user = db.users[userId];
+            if (!user) return;
+
+            const userPosts = db.posts.filter(p => p.authorId === userId);
+            let postsHtml = '';
+            userPosts.forEach(post => {
+                postsHtml += `
+                    <li class="border-t border-gray-700">
+                        <a href="#" class="post-link block p-3 hover:bg-gray-700/30" data-post-id="${post.id}">
+                            <span class="block">${post.title}</span>
+                            <span class="text-xs text-gray-500">${post.forum} • ${post.timestamp}</span>
+                        </a>
+                    </li>
+                `;
+            });
+
+            const profileHtml = `
+                <button class="back-button" onclick="showView('home')">&larr; Voltar para a lista</button>
+                <div class="panel">
+                    <div class="p-4">
+                        <h1 class="text-2xl font-bold text-gray-100">${user.name}</h1>
+                        <p class="text-sm text-gray-500">Membro desde: ${user.joined}</p>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-300 p-3 border-y border-gray-600">Posts de ${user.name}</h3>
+                    <ul>
+                        ${postsHtml || '<li class="p-3 text-gray-500">Nenhum post encontrado.</li>'}
+                    </ul>
+                </div>
+            `;
+            profileView.innerHTML = profileHtml;
+        }
+
+        // --- CONTROLE DE VISUALIZAÇÃO ---
+        window.showView = (viewName, id = null) => {
+            homeView.classList.add('hidden');
+            postView.classList.add('hidden');
+            profileView.classList.add('hidden');
+
+            switch(viewName) {
+                case 'post':
+                    renderPostPage(id);
+                    postView.classList.remove('hidden');
+                    break;
+                case 'profile':
+                    renderProfilePage(id);
+                    profileView.classList.remove('hidden');
+                    break;
+                case 'home':
+                default:
+                    homeView.classList.remove('hidden');
+                    break;
+            }
+            window.scrollTo(0, 0); // Rola para o topo
+        }
+
+        // --- EVENT LISTENERS ---
+        document.body.addEventListener('click', (e) => {
+            // Clicar no título do post
+            const postLink = e.target.closest('article .cursor-pointer');
+            if (postLink) {
+                const postId = postLink.parentElement.dataset.postId;
+                showView('post', postId);
+                return;
+            }
+            
+            // Clicar no link de um post dentro do perfil
+            const postLinkFromProfile = e.target.closest('a.post-link');
+            if(postLinkFromProfile) {
+                e.preventDefault();
+                const postId = postLinkFromProfile.dataset.postId;
+                showView('post', postId);
+                return;
+            }
+
+            // Clicar no nome do usuário
+            const userLink = e.target.closest('a.user-link');
+            if (userLink) {
+                e.preventDefault();
+                const userId = userLink.dataset.userId;
+                showView('profile', userId);
+                return;
+            }
+        });
+        
+        homeLink.addEventListener('click', () => showView('home'));
+
+        // --- INICIALIZAÇÃO ---
+        renderHomePage();
+        showView('home');
+    });
+    </script>
+</body>
+</html>
